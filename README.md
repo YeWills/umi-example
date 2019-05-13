@@ -46,10 +46,26 @@ http://localhost:8000/#/
 ### 本例具有hot-loader功能
 本例具有热更新功能，有兴趣可以研究底层配置实现。
 
-### 待了解
-目前知道，effects是用来创建action的，而言定义了一些关键字(put\call\select..)用来处理比如发送action [ 参考dva知识地图 --effect](https://dvajs.com/knowledgemap/#effect)：
+### effects
+Effect 被称为副作用，在我们的应用中，最常见的就是异步操作。
+项目的异步请求，以及异步请求后根据接口数据，发起action，都是写在effects中。
+effects定义了一些关键字(put\call\select..)用来处理比如发送action：
 ```
 yield put({ type: 'reload' });
 
 ```
-effects跟reducers定义相似，但是effects貌似会在页面加载时一定被执行,[参考示例user-dashboard---src\pages\users\models\users.js](https://github.com/YeWills/dva-example/tree/user-dashboard),而reducers仅仅是用来定义action的reducer处理。---待验证。
+[参考dva--指南-dva概念-models-Effect](https://dvajs.com/guide/concepts.html#effect)
+[参考dva--知识地图-Effect-effects](https://dvajs.com/knowledgemap/#effects)
+
+### effects与reducers
+effects跟reducers定义相似，二者都是用来定义action的reducer操作，不同的是，effects用来定义异步action，当action要发起post请求时，一般用effects；
+相对的，reducer用来定义同步：[参考示例user-dashboard---src\pages\users\models\users.js](https://github.com/YeWills/dva-example/tree/user-dashboard)
+
+
+### 参考文档：
+
+[参考dva--指南-快速上手-定义model](https://dvajs.com/guide/getting-started.html#%E5%AE%9A%E4%B9%89-model)
+[参考dva--指南-dva概念-models-Effect](https://dvajs.com/guide/concepts.html#effect)
+[参考dva--知识地图-Effect-effects](https://dvajs.com/knowledgemap/#effects)
+
+[参考umi--指南-路由-约定式路由](https://umijs.org/zh/guide/router.html#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1)
