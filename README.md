@@ -1,184 +1,55 @@
-# dva-example-user-dashboard
+## with-dva
 
-详见[《12 步 30 分钟，完成用户管理的 CURD 应用 (react+dva+antd)》](https://github.com/sorrycc/blog/issues/18)。
+本例源自官网 [with-dva示例](https://github.com/umijs/umi-examples/tree/master/with-dva)，在此整理此示例的一些笔记。
 
----
+## 项目细节
 
-<p align="center">
-  <img src="https://zos.alipayobjects.com/rmsportal/bmkNCEoluwGaeGjYjInf.png" />
-</p>
+### _layout.js 与 嵌套路由
+[umi 里约定目录下有 _layout.js 时会生成嵌套路由，以 _layout.js 为该目录的 layout 。](https://umijs.org/zh/guide/router.html#%E5%B5%8C%E5%A5%97%E8%B7%AF%E7%94%B1)
 
-## Getting Started
-Install dependencies.
+本例的src\pages\list\_layout.js 是嵌套路由。
 
-```bash
-$ npm install
+### 全局 layout
+与上相应的是，全局路由，[参考官网](https://umijs.org/zh/guide/router.html#%E5%85%A8%E5%B1%80-layout)。
+本例的src\layouts\index.js 是 全局路由。
+
+### model.js 与 models/ 目录
+[参考官网--快速上手-定义model](https://dvajs.com/guide/getting-started.html#%E5%AE%9A%E4%B9%89-model)
+```
+本例的 src\pages\list\search\model.js
+本例的 src\pages\list\models\
+```
+以上两种情况都会被dva用来解析成reducer，组装store.getState().[nameSpace],也就是组装全局state的key值；
+任何组件都可以通过store.getState()获取
+
+这里想说的是，项目中，在不同位置定义的model，看起来没有什么区别或特殊，任意一个地方定义了model后，任何组件都可以凭model的nameSpace获取该状态。
+
+### src\pages\index路由说明
+在目录的 src\pages\index下有以下文件：
+```
++ pages/
+  + index/
+    - components/
+      - Count.js
+    - model.js
+    - index.js
+```
+按照umijs约定，输入以下路由到浏览器url上，应该是可以显示Count页面的：
+```
+http://localhost:8000/#/index/components/Count
+```
+但是却不行，原因是src\pages\index是主目录路由，src\pages\index\目录下定义的文件都将不被解析为路由，此目录下的index.js为默认主域名下的页面：
+```
+http://localhost:8000/#/
 ```
 
-Start server.
+### 本例具有hot-loader功能
+本例具有热更新功能，有兴趣可以研究底层配置实现。
 
-```bash
-$ npm start
+### 待了解
+目前知道，effects是用来创建action的，而言定义了一些关键字(put\call\select..)用来处理比如发送action [ 参考dva知识地图 --effect](https://dvajs.com/knowledgemap/#effect)：
 ```
-
-If success, app will be open in your default browser automatically.
-
-
- ## 项目细节
-
- ### .umi/ 目录
- 此目录为验证目录，npm start生成，没有作用，也不推荐在此修改代码，为方便验证而生。
-
- ### 项目目录
- 详见 ./user-dashboard.jpg
-
- ### 入口页面
- ```
-src\pages\.umi\umi.js  ---ReactDOM.render
-```
-此页面集成了一个项目的两大要素： dva (状态) 和 路由：
-```
-src\pages\.umi\DvaContainer.js  ---dva (状态)
-src\pages\.umi\router.js ---路由
-```
-### dva 布局
-src\pages\.umi\DvaContainer.js
-src\pages\users\models\users.js (reducers effects)
-src\pages\users\components\Users\Users.js (connect mapStateToProps dispatch) 【dispatch 由connect集成】
-
-### User.js页面分析
-#### subscriptions setup
-进入User页面后，首先触发 src\pages\users\models\users.js 下的 ，[原因参考dva文档---异步数据初始化](https://dvajs.com/knowledgemap/#%E5%BC%82%E6%AD%A5%E6%95%B0%E6%8D%AE%E5%88%9D%E5%A7%8B%E5%8C%96):
-```
-subscriptions: {
-    setup({ dispatch, history }) {
-      return history.listen(({ pathname, query }) => {
-        if (pathname === '/users') {
-          dispatch({ type: 'fetch', payload: query });
-        }
-      });
-    },
-  },
-```
-在setup 中触发 改js下的 effects fetch
-
-#### effects fetch
-在fetch中首先 usersService.fetch 向后台请求数据；
-然后将返回的数据，put触发 reducers save;
-```
- *fetch({ payload: { page = 1 } }, { call, put }) {
-      const { data, headers } = yield call(usersService.fetch, { page });
-      yield put({
-        type: 'save',
-        payload: {
-          data,
-          total: parseInt(headers['x-total-count'], 10),
-          page: parseInt(page, 10),
-        },
-      });
-    },
-```
-#### reducers save
-通过save reducer忘redux上造数据list，total。。。以后User页面使用。
-```
- reducers: {
-    save(state, { payload: { data: list, total, page } }) {
-      return { ...state, list, total, page };
-    },
-  },
-```
-
-### 细节关注点
-
-#### *fetch 与 yield 的 generateor写法
-这里的*和yield是 generateor的写法，可到mdn网查询了解。
-
-#### loading
-
-发fetch请求时，通过dva-loading 配合dva中间件，会自动给redux 的store 改变store.loading的state，
-在fetch开始和完成时将store.loading置为true或false：
+yield put({ type: 'reload' });
 
 ```
-//src\pages\.umi\DvaContainer.js
-import createLoading from 'dva-loading';
-app.use(createLoading());
-```
-
-在页面中，通过mapStateToProps拿到这个redux的state.loading值，根据这个值，自行开启或关闭loading组件或效果：
-```
-//src\pages\users\components\Users\Users.js
-<Table
-          columns={columns}
-          dataSource={dataSource}
-          loading={loading}
-          rowKey={record => record.id}
-          pagination={false}
-        />
-
-function mapStateToProps(state) {
-  const { list, total, page } = state.users;
-  return {
-    loading: state.loading.models.users,
-    list,
-    total,
-    page,
-  };
-}
-
-export default connect(mapStateToProps)(Users);
-```
-
-#### import styles from './index.css' 的运用：
-
-```
-import styles from './index.css';
-console.log(styles)//{normal: "index__normal___3v60A", content: "index__content___14HDd", main: "index__main___nz_0B"}
- <div className={styles.main}>{children}</div>
- ```
-
-### dva与umijs项目中起的作用统筹分析
-
-本节分析参考pages/.umi/下的文件进行。
-
-#### dva
-项目中，通过dva，你不用写store与Provider的集成代码，dva帮你把这块实现,dva又将路由这块的逻辑剥离出来，提供类似接口(this.props.children)方式，方便接入项目路由js；(因此，dva只专注做redux相关的状态部分，并剥离路由且提供路由接口，方便接入路由)
-
-而你只需专注于：
-
-1、写reducer；(按dva规定，将reducer写在model下，以便dva能解析)
-
-2、哪个组件需要redux了，给组件包一层connect，写好mapStateToProps，
-
-#### umijs
-至于路由，则由umijs处理，umijs可以将pages下的文件自动解析为路由router.js(.umi下的router.js);
-
-至此，一个项目的 redux与路由两大块全部写好。
-剩下一个工作就是 如何将redux与路由两大块有机结合起来呢，
-这个工作就是umijs做的:
-```
-function render() {
-  const DvaContainer = require('./DvaContainer').default; //dva处理的redux逻辑部分
-ReactDOM.render(React.createElement(
-  DvaContainer,
-  null,
-  React.createElement(require('./router').default)  //umijs处理的路由部分逻辑部分
-), document.getElementById('root'));
-}
-```
-#### 小结
-因此在以上过程umijs做了以下事情：
-
-1、封装路由，按约定会将pages下的文件编译为路由文件；
-
-2、将上面的路由文件与 dva封装好的redux的reducer状态文件有机组合；
-
-3、有机结合路由和redux后，ReactDOM.render生成启动入口js；
-
-由上可知，umijs至始至终没有处理过redux部分，都是dva处理好后，umijs拿过来组合下而已。
-
-整个项目过程，dva只做了一件事情：
-
-封装reducer，处理redux，dva按约定会将model目录下的文件封装成reducer；
-
-另外在整个过程中，umijs顺手还做了 webpack配置，比如module.hot 热更新。
-
+effects跟reducers定义相似，但是effects貌似会在页面加载时一定被执行,[参考示例user-dashboard---src\pages\users\models\users.js](https://github.com/YeWills/dva-example/tree/user-dashboard),而reducers仅仅是用来定义action的reducer处理。---待验证。
