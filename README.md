@@ -11,3 +11,7 @@ Please open an issue [here](https://github.com/umijs/umi/issues?q=is%3Aissue+is%
 ## LICENSE
 
 MIT
+
+
+## 注意
+项目运行时，可能请求会要花很久，也可能fetch失败，多试几次就可成功。
