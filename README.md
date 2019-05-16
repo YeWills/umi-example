@@ -1,2 +1,3 @@
-## umi-example
-本项目用于放置 umi学习 example
+# umi example with nav and sidebar
+
+<img src="https://gw.alipayobjects.com/zos/rmsportal/DReQIejdcJPeaXWEDKDe.png" />
